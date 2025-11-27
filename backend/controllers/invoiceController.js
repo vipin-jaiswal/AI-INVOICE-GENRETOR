@@ -1,0 +1,159 @@
+const Invoice = require ("../models/Invoice");
+
+//@desc Create new Invoice 
+//@route POST / api/invoice
+//@ access Private
+exports.createInvoice = async (req, res) => 
+  {
+  try {
+    const {
+      invoiceNumber,
+      invoiceDate,     // fixed typo
+      dueDate,
+      billFrom,
+      billTo,
+      items,
+      notes,
+      paymentTerms,
+    } = req.body;
+
+    // Calculate subtotal & tax
+    let subtotal = 0;
+    ;
+    let taxTotal = 0;
+
+    items.forEach(item => {
+      const lineTotal = item.unitPrice * item.quantity;     // fixed field names
+      subtotal += lineTotal;
+      taxTotal += (lineTotal * (item.taxPercent || 0)) / 100;
+    });
+
+    const total = subtotal + taxTotal;
+
+    const invoice = await Invoice.create({
+      user: req.user._id,
+      invoiceNumber,
+      invoiceDate,
+      dueDate,
+      billFrom,      // fixed field name
+      billTo,
+      items,
+      notes,
+      paymentTerms,
+      subtotal,
+      taxTotal,
+      total,
+    });
+
+    res.status(201).json(invoice);
+  } catch (error) {
+    res.status(500).json({ message: "Error creating invoice", error: error.message });
+  }
+};
+
+//@desc Get all invoice of logged-in user
+//@route GET / api/invoice
+//@ access Private
+exports.getInvoices =async(req,res) =>{
+    try{
+        const invoices =await Invoice.find().populate("user","name email");
+        res.json(invoices);
+
+     } catch(error){
+        res
+         .status(500)
+         .json({massage: "Error fetching invoice", error: error.massage});
+     }
+}
+
+//@desc Get single invoice by ID 
+//@route GET / api/invoice/:id
+//@ access Private
+exports.getInvoiceById =async (req,res) => {
+    try{
+        const invoice =await Invoice.findById(req.params.id).populate("user","name email");
+        if(!invoice) return res.status(404).json({message: "Invoice ont found"});
+        res.json(invoice);
+     } catch(error){
+        res
+         .status(500)
+         .json({massage: "Error fetching invoice", error: error.massage});
+     }
+};
+
+//@desc Update invoice 
+//@route PUT / api/invoice/:id
+//@ access Private
+exports.updateInvoice = async (req, res) => {
+  try {
+    const {
+      invoiceNumber,
+      invoiceDate,
+      dueDate,
+      billFrom,
+      billTo,
+      items,
+      notes,
+      paymentTerms,
+      status,
+    } = req.body;
+
+    // Recalculate totals only if items are sent
+    let updateData = {
+      invoiceNumber,
+      invoiceDate,
+      dueDate,
+      billFrom,
+      billTo,
+      notes,
+      paymentTerms,
+      status,
+    };
+
+    if (items && Array.isArray(items)) {
+      let subtotal = 0;
+      let taxTotal = 0;
+
+      items.forEach(item => {
+        const lineTotal = item.unitPrice * item.quantity;
+        subtotal += lineTotal;
+        taxTotal += (lineTotal * (item.taxPercent || 0)) / 100;
+      });
+
+      updateData.items = items;
+      updateData.subtotal = subtotal;
+      updateData.taxTotal = taxTotal;
+      updateData.total = subtotal + taxTotal;
+    }
+
+    const updatedInvoice = await Invoice.findOneAndUpdate(
+      { _id: req.params.id, user: req.user._id },  // Security: only owner can update
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedInvoice) {
+      return res.status(404).json({ message: "Invoice not found or not authorized" });
+    }
+
+    res.json(updatedInvoice);
+  } catch (error) {
+    console.error("Update error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+//@desc Delete invoice 
+//@route DELETE / api/invoice/:id
+//@ access Private
+exports.deleteInvoice =async (req,res) => {
+    try{
+        const invoice = await Invoice.findByIdAndDelete(req.params.id);
+        if(!invoice) return res.status(404).json({message: "Invoice not found"});
+        res.json({message: "Invoice deleted successfully"})
+     } catch(error){
+        res
+         .status(500)
+         .json({massage: "Error deleting invoice", error: error.massage});
+     }
+};

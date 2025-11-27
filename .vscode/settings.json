@@ -1,0 +1,8 @@
+{
+    "editor.quickSuggestions": {
+        "strings": "on",
+        "comments": "on"
+    },
+    "editor.suggest.snippetsPreventQuickSuggestions": true,
+    "editor.formatOnPaste": false
+}
