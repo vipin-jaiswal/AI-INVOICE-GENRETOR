@@ -4,11 +4,11 @@
 .env.*.local
 .env*
 
-
 # Dependencies
 node_modules/
 package-lock.json
 yarn.lock
+pnpm-lock.yaml
 
 # Build outputs
 dist/
@@ -23,6 +23,8 @@ out/
 *.swo
 *~
 .DS_Store
+*.sublime-workspace
+*.sublime-project
 
 # Logs
 logs/
@@ -30,6 +32,7 @@ logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
 
 # OS
 Thumbs.db
@@ -38,9 +41,25 @@ Thumbs.db
 # Testing
 coverage/
 .nyc_output/
+*.lcov
 
 # Misc
 .cache/
 temp/
 tmp/
+*.inv
+.turbo/
+dist-ssr/
+*.local
 
+# Backend specific
+backend/node_modules/
+backend/dist/
+backend/.env
+backend/.env.local
+
+# Frontend specific
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
