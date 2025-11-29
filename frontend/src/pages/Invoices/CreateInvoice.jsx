@@ -1,411 +1,214 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState,useEffect } from "react";
+import { useNavigate,useLocation} from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPaths";
-import { Plus, Trash2, Loader2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
+import moment from "moment";
+import {useAuth} from "../../context/AuthContext";
 import Button from "../../components/ui/Button";
 
-const CreateInvoice = () => {
+const CreateInvoice = (
+  { existingInvoice, onSave }
+) => {
+
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    invoiceNumber: "",
-    invoiceDate: new Date().toISOString().split("T")[0],
-    dueDate: "",
-    billFrom: {
-      name: "",
-      email: "",
-      address: "",
-      phone: "",
-    },
-    billTo: {
-      name: "",
-      email: "",
-      address: "",
-      phone: "",
-    },
-    items: [{ description: "", quantity: 1, unitPrice: 0, taxPercent: 0 }],
-    notes: "",
-    paymentTerms: "Net 30",
-  });
+  const location=useLocation();
+  const {user}=useAuth();
 
-  const [errors, setErrors] = useState({});
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleBillFromChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      billFrom: {
-        ...prev.billFrom,
-        [name]: value,
+  const[formDate,setFormDate]=useState(
+    existingInvoice ||{
+      invoiceNumber:"",
+      invoiceDate: new Date().toISOString().split("T")[0],
+      dueDate:"",
+      billFrom:{
+        name:user?.businessName || "",
+        email:user?.email || "",
+        phone:user?.phone || "",
+        address:user?.address || "",
       },
-    }));
-  };
+      billTo:{name:"",email:"",phone:"",address:""},
+      items:[{description:"",quantity:1,unitPrice:0,taxPercent:0}],
+      notes:"",
+      paymentTerms:"Net 15",
+    }
+  );
+  const [loading,setLoading]=useState(false);
+  const [isGeneratingNumber,setIsGeneratingNumber]=useState(!existingInvoice);
 
-  const handleBillToChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      billTo: {
-        ...prev.billTo,
-        [name]: value,
-      },
-    }));
-  };
-
-  const handleItemChange = (index, field, value) => {
-    const newItems = [...formData.items];
-    newItems[index] = {
-      ...newItems[index],
-      [field]: field === "quantity" || field === "unitPrice" || field === "taxPercent" 
-        ? parseFloat(value) || 0 
-        : value,
+  useEffect(()=>{
+    const aiData=location.state?.aiData;
+    if(aiData){
+      setFormDate((prevData)=>({
+        ...prevData,
+        billTo:{
+          name:aiData.clientName || "",
+          email:aiData.clientEmail || "",
+          phone:aiData.clientPhone || "",
+          address:aiData.clientAddress || "",
+        }
+      }));
+    }
+    if(existingInvoice){
+      setFormDate({...existingInvoice
+        ,invoiceDate:moment(existingInvoice.invoiceDate).format("YYYY-MM-DD"),
+        dueDate:moment(existingInvoice.dueDate).format("YYYY-MM-DD"),
+      });
+    } else{
+      const generateInvoiceNumber=async()=>{
+        setIsGeneratingNumber(true);
+        try{
+          const response=await axiosInstance.get(API_PATHS.INVOICE.GET_ALL_INVOICES);
+          const invoices=response.data;
+          let maxNumber=0;
+          invoices.forEach((inv)=>{
+            const num = parseInt(inv.invoiceNumber.split("-")[1]);
+            if(!isNaN(num) && num > maxNumber) maxNumber = num;
+          });
+          const newInvoiceNumber=`INV-${(maxNumber + 1).toString().padStart(4,"0")}`;
+          setFormDate((prev)=>({
+            ...prev,
+            invoiceNumber:newInvoiceNumber,
+          }));
+        } catch(error){
+          console.error("Error generating invoice number:",error);
+          setFormDate((prev)=>({ ...prev,invoiceNumber:`INV-${Date.now().toString().slice(-5)}` }));
+        }
+        setIsGeneratingNumber(false);
     };
-    setFormData((prev) => ({
-      ...prev,
-      items: newItems,
-    }));
+    generateInvoiceNumber();
+    }
+  },[existingInvoice]);
+
+  const handleInputChange=(e, section, index, field)=>{
+    const { value } = e.target;
+    if (section === "items") {
+      const updatedItems = [...formDate.items];
+      updatedItems[index][field] = field === "quantity" || field === "unitPrice" || field === "taxPercent" ? parseFloat(value) || 0 : value;
+      setFormDate({ ...formDate, items: updatedItems });
+    } else {
+      setFormDate({
+        ...formDate,
+        [section]: { ...formDate[section], [field]: value },
+      });
+    }
   };
 
-  const addItem = () => {
-    setFormData((prev) => ({
-      ...prev,
-      items: [
-        ...prev.items,
-        { description: "", quantity: 1, unitPrice: 0, taxPercent: 0 },
-      ],
-    }));
-  };
+  const handleAddItem=()=>{
+    setFormDate({ ...formDate, items:[...formDate.items,{description:"",quantity:1,unitPrice:0,taxPercent:0}] });
+  }
 
-  const removeItem = (index) => {
-    setFormData((prev) => ({
-      ...prev,
-      items: prev.items.filter((_, i) => i !== index),
-    }));
-  };
+  const handleRemoveItem=(index)=>{
+    setFormDate({ ...formDate, items: formDate.items.filter((_, i) => i !== index) });
+  }
 
-  const calculateItemTotal = (item) => {
-    const lineTotal = item.quantity * item.unitPrice;
-    const tax = (lineTotal * item.taxPercent) / 100;
-    return lineTotal + tax;
-  };
-
-  const calculateTotals = () => {
-    let subtotal = 0;
-    let taxTotal = 0;
-    formData.items.forEach((item) => {
-      const lineTotal = item.quantity * item.unitPrice;
-      subtotal += lineTotal;
-      taxTotal += (lineTotal * item.taxPercent) / 100;
+  const{subtotal,taxTotal,total} = (() =>{
+    let subtotal = 0, taxTotal = 0;
+    formDate.items.forEach((item) => {
+      const itemTotal =(item.quantity ||0)*(item.unitPrice || 0);
+      subtotal += itemTotal;
+      taxTotal += itemTotal * ((item.taxPercent || 0) / 100);
     });
     return {
       subtotal,
       taxTotal,
       total: subtotal + taxTotal,
     };
-  };
+  })();
 
-  const validateForm = () => {
-    const newErrors = {};
-    if (!formData.invoiceNumber) newErrors.invoiceNumber = "Invoice number is required";
-    if (!formData.dueDate) newErrors.dueDate = "Due date is required";
-    if (!formData.billFrom.name) newErrors.billFromName = "Company name is required";
-    if (!formData.billTo.name) newErrors.billToName = "Client name is required";
-    if (formData.items.length === 0) newErrors.items = "At least one item is required";
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e) => {
+  const handleSubmit=async(e)=>{
     e.preventDefault();
-    
-    if (!validateForm()) return;
-
     setLoading(true);
-    try {
-      await axiosInstance.post(API_PATHS.INVOICE.CREATE_INVOICE, formData);
-      navigate("/invoices");
-    } catch (error) {
-      console.error("Error creating invoice:", error);
-      setErrors({ submit: error.response?.data?.message || "Failed to create invoice" });
+    try{
+      const invoiceData = {
+        ...formDate,
+        items: formDate.items.map(item => ({ ...item }))
+      };
+      if (existingInvoice) {
+        await axiosInstance.put(`${API_PATHS.INVOICE.UPDATE_INVOICE}/${existingInvoice._id}`, invoiceData);
+      } else {
+        await axiosInstance.post(API_PATHS.INVOICE.CREATE_INVOICE, invoiceData);
+      }
+      if (onSave) {
+        onSave();
+      } else {
+        navigate("/invoices");
+      }
+    } catch(error){
+      console.error("Error saving invoice:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const totals = calculateTotals();
-
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Create Invoice</h1>
-
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Invoice Header */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Invoice Details</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Invoice Number
-              </label>
-              <input
-                type="text"
-                name="invoiceNumber"
-                value={formData.invoiceNumber}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="INV-001"
-              />
-              {errors.invoiceNumber && (
-                <p className="text-red-500 text-sm mt-1">{errors.invoiceNumber}</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Invoice Date
-              </label>
-              <input
-                type="date"
-                name="invoiceDate"
-                value={formData.invoiceDate}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Due Date
-              </label>
-              <input
-                type="date"
-                name="dueDate"
-                value={formData.dueDate}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              {errors.dueDate && (
-                <p className="text-red-500 text-sm mt-1">{errors.dueDate}</p>
-              )}
-            </div>
+    <div className="p-8 max-w-4xl mx-auto">
+      <h1 className="text-3xl font-bold mb-8">{existingInvoice ? "Edit Invoice" : "Create Invoice"}</h1>
+      <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Invoice Number</label>
+            <input type="text" value={formDate.invoiceNumber} disabled className="border p-2 rounded w-full bg-gray-100" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Invoice Date</label>
+            <input type="date" value={formDate.invoiceDate} onChange={(e) => setFormDate({...formDate, invoiceDate: e.target.value})} className="border p-2 rounded w-full" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Due Date</label>
+            <input type="date" value={formDate.dueDate} onChange={(e) => setFormDate({...formDate, dueDate: e.target.value})} className="border p-2 rounded w-full" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Payment Terms</label>
+            <input type="text" value={formDate.paymentTerms} onChange={(e) => setFormDate({...formDate, paymentTerms: e.target.value})} className="border p-2 rounded w-full" />
           </div>
         </div>
 
-        {/* Bill From */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Bill From</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Company Name
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.billFrom.name}
-                onChange={handleBillFromChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Your Company"
-              />
-              {errors.billFromName && (
-                <p className="text-red-500 text-sm mt-1">{errors.billFromName}</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.billFrom.email}
-                onChange={handleBillFromChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="company@example.com"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Address
-              </label>
-              <input
-                type="text"
-                name="address"
-                value={formData.billFrom.address}
-                onChange={handleBillFromChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="123 Main St"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Phone
-              </label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.billFrom.phone}
-                onChange={handleBillFromChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="+1 (555) 000-0000"
-              />
-            </div>
+        <div className="grid grid-cols-2 gap-6">
+          <div>
+            <h3 className="font-semibold mb-3">Bill From</h3>
+            <input type="text" placeholder="Business Name" value={formDate.billFrom.name} onChange={(e) => handleInputChange(e, "billFrom", null, "name")} className="border p-2 rounded w-full mb-2" />
+            <input type="email" placeholder="Email" value={formDate.billFrom.email} onChange={(e) => handleInputChange(e, "billFrom", null, "email")} className="border p-2 rounded w-full mb-2" />
+            <input type="tel" placeholder="Phone" value={formDate.billFrom.phone} onChange={(e) => handleInputChange(e, "billFrom", null, "phone")} className="border p-2 rounded w-full mb-2" />
+            <input type="text" placeholder="Address" value={formDate.billFrom.address} onChange={(e) => handleInputChange(e, "billFrom", null, "address")} className="border p-2 rounded w-full" />
+          </div>
+          <div>
+            <h3 className="font-semibold mb-3">Bill To</h3>
+            <input type="text" placeholder="Client Name" value={formDate.billTo.name} onChange={(e) => handleInputChange(e, "billTo", null, "name")} className="border p-2 rounded w-full mb-2" />
+            <input type="email" placeholder="Email" value={formDate.billTo.email} onChange={(e) => handleInputChange(e, "billTo", null, "email")} className="border p-2 rounded w-full mb-2" />
+            <input type="tel" placeholder="Phone" value={formDate.billTo.phone} onChange={(e) => handleInputChange(e, "billTo", null, "phone")} className="border p-2 rounded w-full mb-2" />
+            <input type="text" placeholder="Address" value={formDate.billTo.address} onChange={(e) => handleInputChange(e, "billTo", null, "address")} className="border p-2 rounded w-full" />
           </div>
         </div>
 
-        {/* Bill To */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Bill To</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Client Name
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.billTo.name}
-                onChange={handleBillToChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Client Name"
-              />
-              {errors.billToName && (
-                <p className="text-red-500 text-sm mt-1">{errors.billToName}</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.billTo.email}
-                onChange={handleBillToChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="client@example.com"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Address
-              </label>
-              <input
-                type="text"
-                name="address"
-                value={formData.billTo.address}
-                onChange={handleBillToChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="123 Client St"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Phone
-              </label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.billTo.phone}
-                onChange={handleBillToChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="+1 (555) 000-0000"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Invoice Items */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">Invoice Items</h2>
-            <button
-              type="button"
-              onClick={addItem}
-              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-            >
-              <Plus className="h-4 w-4" />
+        <div>
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="font-semibold">Invoice Items</h3>
+            <Button onClick={handleAddItem} variant="primary">
+              <Plus className="h-4 w-4 mr-2" />
               Add Item
-            </button>
+            </Button>
           </div>
-
-          {errors.items && (
-            <p className="text-red-500 text-sm mb-4">{errors.items}</p>
-          )}
-
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Description</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Quantity</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Unit Price</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Tax %</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Total</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Action</th>
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border p-2 text-left">Description</th>
+                  <th className="border p-2 text-right">Qty</th>
+                  <th className="border p-2 text-right">Unit Price</th>
+                  <th className="border p-2 text-right">Tax %</th>
+                  <th className="border p-2 text-right">Total</th>
+                  <th className="border p-2">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
-                {formData.items.map((item, index) => (
+              <tbody>
+                {formDate.items.map((item, index) => (
                   <tr key={index}>
-                    <td className="px-4 py-2">
-                      <input
-                        type="text"
-                        value={item.description}
-                        onChange={(e) => handleItemChange(index, "description", e.target.value)}
-                        className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Item description"
-                      />
-                    </td>
-                    <td className="px-4 py-2">
-                      <input
-                        type="number"
-                        value={item.quantity}
-                        onChange={(e) => handleItemChange(index, "quantity", e.target.value)}
-                        className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        min="1"
-                      />
-                    </td>
-                    <td className="px-4 py-2">
-                      <input
-                        type="number"
-                        value={item.unitPrice}
-                        onChange={(e) => handleItemChange(index, "unitPrice", e.target.value)}
-                        className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        min="0"
-                        step="0.01"
-                      />
-                    </td>
-                    <td className="px-4 py-2">
-                      <input
-                        type="number"
-                        value={item.taxPercent}
-                        onChange={(e) => handleItemChange(index, "taxPercent", e.target.value)}
-                        className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        min="0"
-                        step="0.01"
-                      />
-                    </td>
-                    <td className="px-4 py-2 font-medium text-gray-900">
-                      ${calculateItemTotal(item).toFixed(2)}
-                    </td>
-                    <td className="px-4 py-2">
-                      <button
-                        type="button"
-                        onClick={() => removeItem(index)}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </td>
+                    <td className="border p-2"><input type="text" value={item.description} onChange={(e) => handleInputChange(e, "items", index, "description")} className="border p-1 rounded w-full" /></td>
+                    <td className="border p-2"><input type="number" value={item.quantity} onChange={(e) => handleInputChange(e, "items", index, "quantity")} className="border p-1 rounded w-full text-right" /></td>
+                    <td className="border p-2"><input type="number" value={item.unitPrice} onChange={(e) => handleInputChange(e, "items", index, "unitPrice")} className="border p-1 rounded w-full text-right" /></td>
+                    <td className="border p-2"><input type="number" value={item.taxPercent} onChange={(e) => handleInputChange(e, "items", index, "taxPercent")} className="border p-1 rounded w-full text-right" /></td>
+                    <td className="border p-2 text-right">${((item.quantity * item.unitPrice) + (item.quantity * item.unitPrice * (item.taxPercent / 100))).toFixed(2)}</td>
+                    <td className="border p-2 text-center"><button type="button" onClick={() => handleRemoveItem(index)}><Trash2 className="h-4 w-4 text-red-500" /></button></td>
                   </tr>
                 ))}
               </tbody>
@@ -413,77 +216,21 @@ const CreateInvoice = () => {
           </div>
         </div>
 
-        {/* Summary */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex justify-end mb-6">
-            <div className="w-64 space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-700">Subtotal:</span>
-                <span className="font-medium">${totals.subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-700">Tax Total:</span>
-                <span className="font-medium">${totals.taxTotal.toFixed(2)}</span>
-              </div>
-              <div className="border-t border-gray-300 pt-2 flex justify-between">
-                <span className="font-semibold text-gray-900">Total:</span>
-                <span className="font-bold text-lg text-blue-600">${totals.total.toFixed(2)}</span>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Notes
-            </label>
-            <textarea
-              name="notes"
-              value={formData.notes}
-              onChange={handleInputChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Additional notes or payment instructions"
-              rows="4"
-            />
-          </div>
-
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Payment Terms
-            </label>
-            <select
-              name="paymentTerms"
-              value={formData.paymentTerms}
-              onChange={handleInputChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="Net 15">Net 15</option>
-              <option value="Net 30">Net 30</option>
-              <option value="Net 45">Net 45</option>
-              <option value="Net 60">Net 60</option>
-              <option value="Due on receipt">Due on receipt</option>
-            </select>
-          </div>
+        <div className="flex justify-end gap-4 text-lg font-semibold">
+          <div>Subtotal: ${subtotal.toFixed(2)}</div>
+          <div>Tax: ${taxTotal.toFixed(2)}</div>
+          <div className="text-2xl">Total: ${total.toFixed(2)}</div>
         </div>
 
-        {/* Submit Error */}
-        {errors.submit && (
-          <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
-            {errors.submit}
-          </div>
-        )}
+        <div>
+          <label className="block text-sm font-medium mb-1">Notes</label>
+          <textarea value={formDate.notes} onChange={(e) => setFormDate({...formDate, notes: e.target.value})} className="border p-2 rounded w-full" rows="3" />
+        </div>
 
-        {/* Form Actions */}
-        <div className="flex gap-4 justify-end">
-          <button
-            type="button"
-            onClick={() => navigate("/invoices")}
-            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-          <Button type="submit" disabled={loading}>
-            {loading && <Loader2 className="animate-spin h-4 w-4 mr-2" />}
-            {loading ? "Creating..." : "Create Invoice"}
+        <div className="flex justify-end gap-3">
+          <Button onClick={() => navigate("/invoices")} variant="secondary">Cancel</Button>
+          <Button type="submit" disabled={loading} variant="primary">
+            {loading ? "Saving..." : existingInvoice ? "Update Invoice" : "Create Invoice"}
           </Button>
         </div>
       </form>

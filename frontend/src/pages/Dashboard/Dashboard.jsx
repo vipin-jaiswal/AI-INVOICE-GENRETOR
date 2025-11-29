@@ -24,12 +24,33 @@ const Dashboard = () => {
         );
         const invoices = response.data;
         const totalInvoices = invoices.length;
+        
+        // Helper function to safely get invoice total
+        const getInvoiceTotal = (invoice) => {
+          // First try invoice.total
+          if (invoice.total && typeof invoice.total === 'number') {
+            return invoice.total;
+          }
+          
+          // Fallback: calculate from items
+          if (invoice.items && Array.isArray(invoice.items)) {
+            return invoice.items.reduce((sum, item) => {
+              const lineTotal = (item.unitPrice || 0) * (item.quantity || 0);
+              const tax = lineTotal * ((item.taxPercent || 0) / 100);
+              return sum + lineTotal + tax;
+            }, 0);
+          }
+          
+          return 0;
+        };
+        
         const totalPaid = invoices
-          .filter((inv) => inv.status === "Paid")
-          .reduce((acc, inv) => acc + inv.total, 0);
+          .filter((inv) => inv.status?.toLowerCase() === "paid")
+          .reduce((acc, inv) => acc + getInvoiceTotal(inv), 0);
+        
         const totalUnpaid = invoices
-          .filter((inv) => inv.status !== "Paid")
-          .reduce((acc, inv) => acc + inv.total, 0);
+          .filter((inv) => inv.status?.toLowerCase() !== "paid")
+          .reduce((acc, inv) => acc + getInvoiceTotal(inv), 0);
 
         setStats({
           totalInvoices,
@@ -123,52 +144,64 @@ const Dashboard = () => {
       </div>
 
       {/* recent invoices */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+      <div className="w-full bg-white border border-slate-200 rounded-lg shadow-sm shadow-gray-100 overflow-hidden">
+        <div className="px-4 sm:px-6 py-3 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
           <h2 className="text-xl font-bold text-gray-900">Recent Invoices</h2>
-          <Button onClick={() => navigate("/invoices")}>
-            <Plus className="h-4 w-4 " />
+          <Button variant="secondary" onClick={() => navigate("/invoices")}>
             View ALL
           </Button>
         </div>
         {recentInvoices.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <div className="overflow-x-auto w-[90vh] md:w-auto">
+            <table className="w-full min-w-[600px] divide-y divide-slate-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Client
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Amount
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Date
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Due Date
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {recentInvoices.map((invoice) => (
+                {recentInvoices.map((invoice) => {
+                  const invoiceTotal = invoice.total && typeof invoice.total === 'number' ? invoice.total :
+                    (invoice.items?.reduce((sum, item) => {
+                      const lineTotal = (item.unitPrice || 0) * (item.quantity || 0);
+                      const tax = lineTotal * ((item.taxPercent || 0) / 100);
+                      return sum + lineTotal + tax;
+                    }, 0) || 0);
+                  
+                  return (
                   <tr
                     key={invoice._id}
                     className="hover:bg-gray-50 cursor-pointer"
                     onClick={() => navigate(`/invoices/${invoice._id}`)}
                   >
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {invoice.billTo?.name || "N/A"}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                     <div className="text-sm font-medium text-gray-900">
+                       {invoice.billTo?.name || "N/A"}
+                       </div>
+                     <div className="text-xs text-gray-400">
+                       {invoice.invoiceNumber}
+                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                      ${invoice.total?.toFixed(2) || "0.00"}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      ${invoiceTotal.toFixed(2)}
                     </td>
-                    <td className="px-6 py-4 text-sm">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          invoice.status === "Paid"
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          invoice.status?.toLowerCase() === "paid"
                             ? "bg-emerald-100 text-emerald-800"
-                            : invoice.status === "Unpaid"
+                            : invoice.status?.toLowerCase() === "unpaid"
                             ? "bg-red-100 text-red-800"
                             : "bg-yellow-100 text-yellow-800"
                         }`}
@@ -176,27 +209,33 @@ const Dashboard = () => {
                         {invoice.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {moment(invoice.dueDate).format("MMM DD, YYYY")}
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
         ) : (
-          <div className="p-6 text-center">
-            <p className="text-gray-600">
-              No invoices yet. Create your first invoice to get started.
-            </p>
-            <Button
-              onClick={() => navigate("/invoices/create")}
-              className="mt-4"
-            >
-              Create First Invoice
-            </Button>
-          </div>
-        )}
+         <div className="flex flex-col justify-center items-center text-center py-12">
+           <div className="w-16 h-16 flex items-center justify-center rounded-full bg-gray-100 mb-4">
+             <FileText className="h-8 w-8 mx-auto mb-2 text-gray-400 " />  
+             </div>
+             <h3 className="text-lg font-medium">
+                No recent invoices found.
+              </h3>
+              <p className="text-slate-500 mb-6 max-w-md">
+                You haven't created any invoices yet. Get started by creating your first invoice.
+              </p>
+              <Button
+                onClick={() => navigate("/invoices/create")}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Invoice
+              </Button>
+         </div> 
+        )}  
       </div>
     </div>
   );

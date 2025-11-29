@@ -5,6 +5,7 @@ const itemSchema = new mongoose.Schema({
     quantity: { type: Number, required: true },
     unitPrice: { type: Number, required: true },
     taxPercent: { type: Number, default: 0 },
+    total: { type: Number, default: 0 },
 });
 
 const invoiceSchema = new mongoose.Schema({
@@ -46,8 +47,8 @@ const invoiceSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ["paid", "unpaid"],
-        default: "unpaid",
+        enum: ["Paid", "Unpaid"],
+        default: "Unpaid",
     },
     subtotal: Number,
     taxTotal: Number,

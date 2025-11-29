@@ -19,13 +19,18 @@ exports.createInvoice = async (req, res) =>
 
     // Calculate subtotal & tax
     let subtotal = 0;
-    ;
     let taxTotal = 0;
 
-    items.forEach(item => {
-      const lineTotal = item.unitPrice * item.quantity;     // fixed field names
+    const itemsWithTotals = items.map(item => {
+      const lineTotal = item.unitPrice * item.quantity;
+      const lineTax = (lineTotal * (item.taxPercent || 0)) / 100;
       subtotal += lineTotal;
-      taxTotal += (lineTotal * (item.taxPercent || 0)) / 100;
+      taxTotal += lineTax;
+      
+      return {
+        ...item,
+        total: lineTotal + lineTax
+      };
     });
 
     const total = subtotal + taxTotal;
@@ -37,7 +42,7 @@ exports.createInvoice = async (req, res) =>
       dueDate,
       billFrom,      // fixed field name
       billTo,
-      items,
+      items: itemsWithTotals,
       notes,
       paymentTerms,
       subtotal,
@@ -114,13 +119,19 @@ exports.updateInvoice = async (req, res) => {
       let subtotal = 0;
       let taxTotal = 0;
 
-      items.forEach(item => {
+      const itemsWithTotals = items.map(item => {
         const lineTotal = item.unitPrice * item.quantity;
+        const lineTax = (lineTotal * (item.taxPercent || 0)) / 100;
         subtotal += lineTotal;
-        taxTotal += (lineTotal * (item.taxPercent || 0)) / 100;
+        taxTotal += lineTax;
+        
+        return {
+          ...item,
+          total: lineTotal + lineTax
+        };
       });
 
-      updateData.items = items;
+      updateData.items = itemsWithTotals;
       updateData.subtotal = subtotal;
       updateData.taxTotal = taxTotal;
       updateData.total = subtotal + taxTotal;
