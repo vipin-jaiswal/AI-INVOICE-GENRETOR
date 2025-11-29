@@ -1,7 +1,2 @@
-import React from 'react';
-
-const SignUp = () => {
-  return <div>SignUp page</div>;
-};
-
-export default SignUp;
+// This file is a duplicate - use SignUp.jsx instead
+export { default } from './SignUp';

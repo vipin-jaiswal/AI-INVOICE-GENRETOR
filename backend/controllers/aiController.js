@@ -148,44 +148,73 @@ const getDashboardSummary = async (req, res) => {
       return sum + amount;
     }, 0);
 
-    const dataSummary = `
-    - Total number of invoices: ${invoices.length}
-    - Total paid invoices: ${paidInvoices.length}
-    - Total unpaid/pending invoices: ${unpaidInvoices.length}
-    - Total revenue from all invoices: $${totalRevenue.toFixed(2)}
-    - Total outstanding amount from unpaid invoices: $${totalOutstanding.toFixed(2)}
-    - Recent invoices (last 5): ${invoices.slice(0, 5).map(inv => {
-      const amount = inv.items?.reduce((sum, item) => sum + (item.total || 0), 0) || 0;
-      return `Invoice#${inv.invoiceNumber} - $${amount.toFixed(2)} - Status: ${inv.status}`;
-    }).join(', ')}
-    `;
+    const insights = [];
 
-    const prompt = `You are a friendly and insightful business analyst for a small business owner. 
-    Based on the following invoice data summary, provide 2-3 concise and insightful observations.
-    Each insight should be a short string in a JSON array.
-    The insights should be encouraging and helpful. Do not just repeat the data.
-    For example: if there is high outstanding amount, suggest sending reminders; if revenue is high, be encouraging.
+    // Generate insights without AI if API is not available
+    try {
+      if (process.env.GEMINI_API_KEY) {
+        const dataSummary = `
+        - Total number of invoices: ${invoices.length}
+        - Total paid invoices: ${paidInvoices.length}
+        - Total unpaid/pending invoices: ${unpaidInvoices.length}
+        - Total revenue from all invoices: $${totalRevenue.toFixed(2)}
+        - Total outstanding amount from unpaid invoices: $${totalOutstanding.toFixed(2)}
+        - Recent invoices (last 5): ${invoices.slice(0, 5).map(inv => {
+          const amount = inv.items?.reduce((sum, item) => sum + (item.total || 0), 0) || 0;
+          return `Invoice#${inv.invoiceNumber} - $${amount.toFixed(2)} - Status: ${inv.status}`;
+        }).join(', ')}
+        `;
 
-    Data Summary:
-    ${dataSummary}
+        const prompt = `You are a friendly and insightful business analyst for a small business owner. 
+        Based on the following invoice data summary, provide 2-3 concise and insightful observations.
+        Each insight should be a short string in a JSON array.
+        The insights should be encouraging and helpful. Do not just repeat the data.
+        For example: if there is high outstanding amount, suggest sending reminders; if revenue is high, be encouraging.
 
-    Return your response as a JSON object with a single key "insights" containing an array of strings.
-    Example format: { "insights": [ "Your revenue is looking strong this month", "You have 5 overdue invoices. Consider sending reminders to get paid faster." ] }`;
+        Data Summary:
+        ${dataSummary}
 
-    // Call the AI model
-    const response = await ai.models.generateContent({
-      model: "models/gemini-2.5-flash",
-      contents: prompt,
-    });
+        Return your response as a JSON object with a single key "insights" containing an array of strings.
+        Example format: { "insights": [ "Your revenue is looking strong this month", "You have 5 overdue invoices. Consider sending reminders to get paid faster." ] }`;
 
-    // Extract the generated text correctly
-    const responseText = response.candidates?.[0]?.content?.parts?.[0]?.text;
-    const responseTextCleaned = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
-    const parsedData = JSON.parse(responseTextCleaned);
+        // Call the AI model
+        const response = await ai.models.generateContent({
+          model: "models/gemini-2.5-flash",
+          contents: prompt,
+        });
 
-    res.status(200).json(parsedData);
+        // Extract the generated text correctly
+        const responseText = response.candidates?.[0]?.content?.parts?.[0]?.text;
+        const responseTextCleaned = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+        const parsedData = JSON.parse(responseTextCleaned);
+
+        return res.status(200).json(parsedData);
+      }
+    } catch (aiError) {
+      console.warn("AI model not available, using fallback insights:", aiError.message);
+    }
+
+    // Fallback: Generate insights locally
+    if (paidInvoices.length > 0) {
+      const paymentRate = ((paidInvoices.length / invoices.length) * 100).toFixed(0);
+      insights.push(`Great! You have ${paymentRate}% payment completion rate (${paidInvoices.length} of ${invoices.length} invoices paid).`);
+    }
+
+    if (totalOutstanding > 0) {
+      insights.push(`You have $${totalOutstanding.toFixed(2)} outstanding. Consider sending payment reminders to speed up collection.`);
+    }
+
+    if (totalRevenue > 0) {
+      insights.push(`Your total revenue is $${totalRevenue.toFixed(2)} from ${invoices.length} invoices.`);
+    }
+
+    if (insights.length === 0) {
+      insights.push("Keep creating invoices to get more detailed insights about your business.");
+    }
+
+    res.status(200).json({ insights });
   } catch (error) {
-    console.error("Error fetching dashboard summary with AI:", error);
+    console.error("Error fetching dashboard summary:", error);
     res.status(500).json({
       message: "Failed to fetch dashboard summary.",
       details: error.message,

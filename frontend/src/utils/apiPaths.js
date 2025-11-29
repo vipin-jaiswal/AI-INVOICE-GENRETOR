@@ -6,14 +6,15 @@ export const API_PATHS = {
     REGISTER: `${BASE_URL}/api/auth/register`,
     LOGOUT: `${BASE_URL}/api/auth/logout`,
   },
-  INVOICES: {
-    GET_ALL: `${BASE_URL}/api/invoices`,
-    CREATE: `${BASE_URL}/api/invoices/create`,
-    GET_ONE: `${BASE_URL}/api/invoices`,
-    UPDATE: `${BASE_URL}/api/invoices`,
-    DELETE: `${BASE_URL}/api/invoices`,
+  INVOICE: {
+    GET_ALL_INVOICES: `${BASE_URL}/api/invoices`,
+    CREATE_INVOICE: `${BASE_URL}/api/invoices`,
+    GET_INVOICE: `${BASE_URL}/api/invoices`,
+    UPDATE_INVOICE: `${BASE_URL}/api/invoices`,
+    DELETE_INVOICE: `${BASE_URL}/api/invoices`,
   },
   AI: {
     GENERATE: `${BASE_URL}/api/ai/generate`,
+    GET_DASHBOARD: `${BASE_URL}/api/ai/dashboard-summary`,
   },
 };

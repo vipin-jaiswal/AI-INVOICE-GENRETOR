@@ -56,13 +56,13 @@ exports.createInvoice = async (req, res) =>
 //@ access Private
 exports.getInvoices =async(req,res) =>{
     try{
-        const invoices =await Invoice.find().populate("user","name email");
+        const invoices =await Invoice.find({ user: req.user._id }).populate("user","name email");
         res.json(invoices);
 
      } catch(error){
         res
          .status(500)
-         .json({massage: "Error fetching invoice", error: error.massage});
+         .json({message: "Error fetching invoice", error: error.message});
      }
 }
 
@@ -72,12 +72,12 @@ exports.getInvoices =async(req,res) =>{
 exports.getInvoiceById =async (req,res) => {
     try{
         const invoice =await Invoice.findById(req.params.id).populate("user","name email");
-        if(!invoice) return res.status(404).json({message: "Invoice ont found"});
+        if(!invoice) return res.status(404).json({message: "Invoice not found"});
         res.json(invoice);
      } catch(error){
         res
          .status(500)
-         .json({massage: "Error fetching invoice", error: error.massage});
+         .json({message: "Error fetching invoice", error: error.message});
      }
 };
 
@@ -148,12 +148,17 @@ exports.updateInvoice = async (req, res) => {
 //@ access Private
 exports.deleteInvoice =async (req,res) => {
     try{
-        const invoice = await Invoice.findByIdAndDelete(req.params.id);
+        const invoice = await Invoice.findByIdAndDelete(req.params.id).populate("user","name email");
         if(!invoice) return res.status(404).json({message: "Invoice not found"});
-        res.json({message: "Invoice deleted successfully"})
+        
+        if(invoice.user.toString() !== req.user._id.toString()){
+          return res.status(403).json({message: "Not authorized to delete this invoice"});
+        }
+        
+        res.json(invoice);
      } catch(error){
         res
          .status(500)
-         .json({massage: "Error deleting invoice", error: error.massage});
+         .json({message: "Error deleting invoice", error: error.message});
      }
 };
