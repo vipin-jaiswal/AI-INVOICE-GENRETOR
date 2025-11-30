@@ -19,7 +19,7 @@ const CreateInvoice = ({ existingInvoice, onSave }) => {
   const [formDate, setFormDate] = useState(
     existingInvoice || {
       invoiceNumber: "",
-      invoiceDate: new Date().toISOString().split("T")[0],
+      invoiceDate: moment().format("DD-MM-YYYY"),
       dueDate: "",
       billFrom: {
         name: user?.businessName || "",
@@ -54,8 +54,8 @@ const CreateInvoice = ({ existingInvoice, onSave }) => {
     if (existingInvoice) {
       setFormDate({
         ...existingInvoice,
-        invoiceDate: moment(existingInvoice.invoiceDate).format("YYYY-MM-DD"),
-        dueDate: moment(existingInvoice.dueDate).format("YYYY-MM-DD"),
+        invoiceDate: moment(existingInvoice.invoiceDate).format("DD-MM-YYYY"),
+        dueDate: moment(existingInvoice.dueDate).format("DD-MM-YYYY"),
       });
     } else {
       const generateInvoiceNumber = async () => {
@@ -180,87 +180,75 @@ const CreateInvoice = ({ existingInvoice, onSave }) => {
 
       <div className="bg-white p-6 rounded-lg shadow-sm shadow-gray-100 border border-slate-200">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <InputField
-            label="Invoice Number"
-            name="invoiceNumber"
-            readOnly
-            value={formDate.invoiceNumber}
-            placeholder={isGeneratingNumber ? "Generating..." : ""}
-            disabled
-          />
-          <InputField
-            label="Invoice Date"
-            type="date"
-            name="invoiceDate"
-            value={formDate.invoiceDate}
-            onChange={handleInputChange}
-          />
-
-          <InputField
-            label="Due Date"
-            type="date"
-            name="dueDate"
-            value={formDate.dueDate}
-            onChange={handleInputChange}
-          />
+          <div>
+            <label className="block text-sm font-medium mb-1">Invoice Number</label>
+            <input type="text" value={formDate.invoiceNumber} disabled className="border p-2 rounded w-full bg-gray-100" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Invoice Date</label>
+            <input 
+              type="date" 
+              value={moment(formDate.invoiceDate, "DD-MM-YYYY").format("YYYY-MM-DD")} 
+              onChange={(e) => {
+                const dateObj = moment(e.target.value, "YYYY-MM-DD");
+                setFormDate({...formDate, invoiceDate: dateObj.format("DD-MM-YYYY")});
+              }} 
+              className="border p-2 rounded w-full" 
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Due Date</label>
+            <input 
+              type="date" 
+              value={moment(formDate.dueDate, "DD-MM-YYYY").isValid() ? moment(formDate.dueDate, "DD-MM-YYYY").format("YYYY-MM-DD") : ""} 
+              onChange={(e) => {
+                const dateObj = moment(e.target.value, "YYYY-MM-DD");
+                setFormDate({...formDate, dueDate: dateObj.format("DD-MM-YYYY")});
+              }} 
+              className="border p-2 rounded w-full" 
+            />
+          </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="bg-white p-6 rounded-lg shadow-sm shadow-gray-100 border border-slate-200 space-y-4">
           <h3 className="text-lg font-semibold text-gray-900">Bill From</h3>
-          <InputField
-            label="Business Name"
-            name="businessName"
-            value={formDate.billFrom.businessName}
-            onChange={(e) => handleInputChange(e, "billFrom", null, "name")}
-          />
-          <InputField
-            label="Email"
-            name="email"
-            value={formDate.billFrom.email}
-            onChange={(e) => handleInputChange(e, "billFrom", null, "email")}
-          />
-          <InputField
-            label="Phone"
-            name="phone"
-            value={formDate.billFrom.phone}
-            onChange={(e) => handleInputChange(e, "billFrom", null, "phone")}
-          />
-          <TextAreaField
-            label="Address"
-            name="address"
-            value={formDate.billFrom.address}
-            onChange={(e) => handleInputChange(e, "billFrom", null, "address")}
-          />
+          <div>
+            <label className="block text-sm font-medium mb-1">Business Name</label>
+            <input type="text" value={formDate.billFrom.name} onChange={(e) => handleInputChange(e, "billFrom", null, "name")} className="border p-2 rounded w-full" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Email</label>
+            <input type="email" value={formDate.billFrom.email} onChange={(e) => handleInputChange(e, "billFrom", null, "email")} className="border p-2 rounded w-full" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Phone</label>
+            <input type="tel" value={formDate.billFrom.phone} onChange={(e) => handleInputChange(e, "billFrom", null, "phone")} className="border p-2 rounded w-full" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Address</label>
+            <textarea value={formDate.billFrom.address} onChange={(e) => handleInputChange(e, "billFrom", null, "address")} className="border p-2 rounded w-full" rows="2" />
+          </div>
         </div>
         <div className="bg-white p-6 rounded-lg shadow-sm shadow-gray-100 border border-slate-200 space-y-4">
           <h3 className="text-lg font-semibold text-gray-900">Bill To</h3>
-          <InputField
-            label="Client Name"
-            name="clientName"
-            value={formDate.billTo.name}
-            onChange={(e) => handleInputChange(e, "billTo", null, "name")}
-          />
-          <InputField
-            label="Client Email"
-            type="email"
-            name="email"
-            value={formDate.billTo.email}
-            onChange={(e) => handleInputChange(e, "billTo", null, "email")}
-          />
-          <InputField
-            label="Client Phone"
-            name="phone"
-            value={formDate.billTo.phone}
-            onChange={(e) => handleInputChange(e, "billTo", null, "phone")}
-          />
-          <TextAreaField
-            label="Client Address"
-            name="address"
-            value={formDate.billTo.address}
-            onChange={(e) => handleInputChange(e, "billTo", null, "address")}
-          />
+          <div>
+            <label className="block text-sm font-medium mb-1">Client Name</label>
+            <input type="text" value={formDate.billTo.name} onChange={(e) => handleInputChange(e, "billTo", null, "name")} className="border p-2 rounded w-full" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Client Email</label>
+            <input type="email" value={formDate.billTo.email} onChange={(e) => handleInputChange(e, "billTo", null, "email")} className="border p-2 rounded w-full" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Client Phone</label>
+            <input type="tel" value={formDate.billTo.phone} onChange={(e) => handleInputChange(e, "billTo", null, "phone")} className="border p-2 rounded w-full" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Client Address</label>
+            <textarea value={formDate.billTo.address} onChange={(e) => handleInputChange(e, "billTo", null, "address")} className="border p-2 rounded w-full" rows="2" />
+          </div>
         </div>
       </div>
 
