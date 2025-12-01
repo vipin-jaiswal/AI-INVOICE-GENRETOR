@@ -17,6 +17,29 @@ exports.createInvoice = async (req, res) =>
       paymentTerms,
     } = req.body;
 
+    // Parse dates - handle both DD-MM-YYYY and YYYY-MM-DD formats
+    const parseDate = (dateStr) => {
+      if (!dateStr) return null;
+      if (dateStr instanceof Date) return dateStr;
+      
+      // Try YYYY-MM-DD format (from HTML date input)
+      if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        return new Date(dateStr + 'T00:00:00Z');
+      }
+      
+      // Try DD-MM-YYYY format (from moment formatting)
+      if (dateStr.match(/^\d{2}-\d{2}-\d{4}$/)) {
+        const [day, month, year] = dateStr.split('-');
+        return new Date(`${year}-${month}-${day}T00:00:00Z`);
+      }
+      
+      // Fallback to Date parsing
+      return new Date(dateStr);
+    };
+
+    let parsedInvoiceDate = parseDate(invoiceDate);
+    let parsedDueDate = parseDate(dueDate);
+
     // Calculate subtotal & tax
     let subtotal = 0;
     let taxTotal = 0;
@@ -38,8 +61,8 @@ exports.createInvoice = async (req, res) =>
     const invoice = await Invoice.create({
       user: req.user._id,
       invoiceNumber,
-      invoiceDate,
-      dueDate,
+      invoiceDate: parsedInvoiceDate,
+      dueDate: parsedDueDate,
       billFrom,      // fixed field name
       billTo,
       items: itemsWithTotals,
@@ -52,6 +75,7 @@ exports.createInvoice = async (req, res) =>
 
     res.status(201).json(invoice);
   } catch (error) {
+    console.error("Create invoice error:", error);
     res.status(500).json({ message: "Error creating invoice", error: error.message });
   }
 };
@@ -103,11 +127,34 @@ exports.updateInvoice = async (req, res) => {
       status,
     } = req.body;
 
+    // Parse dates - handle both DD-MM-YYYY and YYYY-MM-DD formats
+    const parseDate = (dateStr) => {
+      if (!dateStr) return null;
+      if (dateStr instanceof Date) return dateStr;
+      
+      // Try YYYY-MM-DD format (from HTML date input)
+      if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        return new Date(dateStr + 'T00:00:00Z');
+      }
+      
+      // Try DD-MM-YYYY format (from moment formatting)
+      if (dateStr.match(/^\d{2}-\d{2}-\d{4}$/)) {
+        const [day, month, year] = dateStr.split('-');
+        return new Date(`${year}-${month}-${day}T00:00:00Z`);
+      }
+      
+      // Fallback to Date parsing
+      return new Date(dateStr);
+    };
+
+    let parsedInvoiceDate = parseDate(invoiceDate);
+    let parsedDueDate = parseDate(dueDate);
+
     // Recalculate totals only if items are sent
     let updateData = {
       invoiceNumber,
-      invoiceDate,
-      dueDate,
+      invoiceDate: parsedInvoiceDate,
+      dueDate: parsedDueDate,
       billFrom,
       billTo,
       notes,
