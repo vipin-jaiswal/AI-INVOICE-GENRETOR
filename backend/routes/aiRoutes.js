@@ -11,7 +11,7 @@ const router = express.Router();
 // All routes are protected
 router.use(protect);
 
-router.post("/parse-text", parseInvoiceFromText);
+router.post("/parse-invoice-text", parseInvoiceFromText);
 router.post("/generate-reminder", generateReminderEmail);
 router.get("/dashboard-summary", getDashboardSummary);
 

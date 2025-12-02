@@ -59,7 +59,45 @@ Provide only the JSON object.`;
     // Parse JSON
     const parsedData = JSON.parse(cleanedJson);
 
-    res.status(200).json(parsedData);
+    // Generate invoice number
+    const invoiceNumber = `INV-${Date.now()}`;
+
+    // Transform items to match schema (name -> description)
+    const transformedItems = parsedData.items.map(item => ({
+      description: item.name || item.description,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      taxPercent: item.taxPercent || 0,
+      total: item.total || (item.quantity * item.unitPrice * (1 + (item.taxPercent || 0) / 100)),
+    }));
+
+    // Calculate totals
+    const subtotal = transformedItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+    const taxTotal = transformedItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice * item.taxPercent / 100), 0);
+    const total = subtotal + taxTotal;
+
+    // Create and save the invoice
+    const newInvoice = new Invoice({
+      user: req.user._id,
+      invoiceNumber,
+      billTo: {
+        name: parsedData.billTo?.businessName || "Client",
+        email: parsedData.billTo?.email,
+        address: parsedData.billTo?.address,
+        phone: parsedData.billTo?.phone,
+      },
+      items: transformedItems,
+      status: "Unpaid",
+      invoiceDate: new Date(),
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      subtotal,
+      taxTotal,
+      total,
+    });
+
+    await newInvoice.save();
+
+    res.status(200).json({ invoiceId: newInvoice._id });
   } catch (error) {
     console.error("Error parsing invoice with AI:", error);
     res.status(500).json({

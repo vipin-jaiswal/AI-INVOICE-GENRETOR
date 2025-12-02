@@ -3,9 +3,9 @@ import DashboardLayout from "../layout/DashboardLayout";
 import { useAuth } from "../../context/AuthContext";
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth(); 
+  const { isAuthenticated, isLoading } = useAuth(); 
 
-  if (loading) {
+  if (isLoading) {
     return <div>Loading...</div>;
   }
   if (!isAuthenticated) {

@@ -20,21 +20,32 @@ exports.createInvoice = async (req, res) =>
     // Parse dates - handle both DD-MM-YYYY and YYYY-MM-DD formats
     const parseDate = (dateStr) => {
       if (!dateStr) return null;
-      if (dateStr instanceof Date) return dateStr;
+      
+      // If it's already a Date object, validate it
+      if (dateStr instanceof Date) {
+        if (isNaN(dateStr.getTime())) return null; // Invalid date
+        return dateStr;
+      }
+      
+      // Convert to string if not already
+      const str = String(dateStr).trim();
       
       // Try YYYY-MM-DD format (from HTML date input)
-      if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        return new Date(dateStr + 'T00:00:00Z');
+      if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+        const date = new Date(str + 'T00:00:00Z');
+        return isNaN(date.getTime()) ? null : date;
       }
       
       // Try DD-MM-YYYY format (from moment formatting)
-      if (dateStr.match(/^\d{2}-\d{2}-\d{4}$/)) {
-        const [day, month, year] = dateStr.split('-');
-        return new Date(`${year}-${month}-${day}T00:00:00Z`);
+      if (/^\d{2}-\d{2}-\d{4}$/.test(str)) {
+        const [day, month, year] = str.split('-');
+        const date = new Date(`${year}-${month}-${day}T00:00:00Z`);
+        return isNaN(date.getTime()) ? null : date;
       }
       
       // Fallback to Date parsing
-      return new Date(dateStr);
+      const date = new Date(str);
+      return isNaN(date.getTime()) ? null : date;
     };
 
     let parsedInvoiceDate = parseDate(invoiceDate);
@@ -102,6 +113,11 @@ exports.getInvoiceById =async (req,res) => {
     try{
         const invoice =await Invoice.findById(req.params.id).populate("user","name email");
         if(!invoice) return res.status(404).json({message: "Invoice not found"});
+
+        if(invoice.user._id.toString() !== req.user._id.toString()){
+          return res.status(403).json({message: "Not authorized to view this invoice"});
+        }
+
         res.json(invoice);
      } catch(error){
         res
@@ -130,21 +146,32 @@ exports.updateInvoice = async (req, res) => {
     // Parse dates - handle both DD-MM-YYYY and YYYY-MM-DD formats
     const parseDate = (dateStr) => {
       if (!dateStr) return null;
-      if (dateStr instanceof Date) return dateStr;
+      
+      // If it's already a Date object, validate it
+      if (dateStr instanceof Date) {
+        if (isNaN(dateStr.getTime())) return null; // Invalid date
+        return dateStr;
+      }
+      
+      // Convert to string if not already
+      const str = String(dateStr).trim();
       
       // Try YYYY-MM-DD format (from HTML date input)
-      if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        return new Date(dateStr + 'T00:00:00Z');
+      if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+        const date = new Date(str + 'T00:00:00Z');
+        return isNaN(date.getTime()) ? null : date;
       }
       
       // Try DD-MM-YYYY format (from moment formatting)
-      if (dateStr.match(/^\d{2}-\d{2}-\d{4}$/)) {
-        const [day, month, year] = dateStr.split('-');
-        return new Date(`${year}-${month}-${day}T00:00:00Z`);
+      if (/^\d{2}-\d{2}-\d{4}$/.test(str)) {
+        const [day, month, year] = str.split('-');
+        const date = new Date(`${year}-${month}-${day}T00:00:00Z`);
+        return isNaN(date.getTime()) ? null : date;
       }
       
       // Fallback to Date parsing
-      return new Date(dateStr);
+      const date = new Date(str);
+      return isNaN(date.getTime()) ? null : date;
     };
 
     let parsedInvoiceDate = parseDate(invoiceDate);
@@ -206,14 +233,16 @@ exports.updateInvoice = async (req, res) => {
 //@ access Private
 exports.deleteInvoice =async (req,res) => {
     try{
-        const invoice = await Invoice.findByIdAndDelete(req.params.id).populate("user","name email");
+        const invoice = await Invoice.findById(req.params.id);
         if(!invoice) return res.status(404).json({message: "Invoice not found"});
         
         if(invoice.user.toString() !== req.user._id.toString()){
           return res.status(403).json({message: "Not authorized to delete this invoice"});
         }
+
+        await Invoice.findByIdAndDelete(req.params.id);
         
-        res.json(invoice);
+        res.json({ message: "Invoice deleted successfully", invoice });
      } catch(error){
         res
          .status(500)

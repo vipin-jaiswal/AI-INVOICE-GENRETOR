@@ -109,18 +109,23 @@ const CreateInvoice = ({ existingInvoice, onSave }) => {
 
   const handleInputChange = (e, section, index, field) => {
     const { name, value } = e.target;
+    
+    // Handle items array updates
     if (section === "items" && index !== undefined) {
       const newItems = [...formDate.items];
       // Convert to number for numeric fields
-      const numericFields = ["quantity", "unitPrice", "taxPercent"];
-      newItems[index] = {
-        ...newItems[index],
-        [name]: numericFields.includes(name) ? parseFloat(value) || 0 : value,
-      };
+      const numValue = ["quantity", "unitPrice", "taxPercent"].includes(name) 
+        ? parseFloat(value) || 0 
+        : value;
+      newItems[index] = { ...newItems[index], [name]: numValue };
       setFormDate((prev) => ({ ...prev, items: newItems }));
-    } else if (section) {
+    } 
+    // Handle nested section updates (billFrom, billTo)
+    else if (section && section !== "items") {
       setFormDate((prev) => ({ ...prev, [section]: { ...prev[section], [name]: value } }));
-    } else {
+    } 
+    // Handle top-level field updates
+    else {
       setFormDate((prev) => ({ ...prev, [name]: value }));
     }
   };
