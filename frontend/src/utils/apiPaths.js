@@ -5,6 +5,8 @@ export const API_PATHS = {
     LOGIN: `${BASE_URL}/api/auth/login`,
     REGISTER: `${BASE_URL}/api/auth/register`,
     LOGOUT: `${BASE_URL}/api/auth/logout`,
+    GET_ME: `${BASE_URL}/api/auth/me`,
+    UPDATE_PROFILE: `${BASE_URL}/api/auth/me`,
   },
   INVOICE: {
     GET_ALL_INVOICES: `${BASE_URL}/api/invoices`,
