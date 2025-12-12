@@ -1,0 +1,226 @@
+{
+  "generated_at": "2025-12-09T23:46:15.773335",
+  "total_invoices": 20,
+  "invoices": [
+    {
+      "SalesAmount": 4321904.6,
+      "Quantity": 40.994400000000006,
+      "UnitPrice": 105426.70706242802,
+      "Tax": 432190.45999999996,
+      "Total": 4754095.06,
+      "InvoiceNumber": "INV-00001",
+      "Date": "2020-02-27",
+      "CustomerID": "CUST-38548",
+      "ProductID": "9320LWFW"
+    },
+    {
+      "SalesAmount": 3522015.65,
+      "Quantity": 27.0,
+      "UnitPrice": 130445.02407407407,
+      "Tax": 352201.565,
+      "Total": 3874217.2150000003,
+      "InvoiceNumber": "INV-00002",
+      "Date": "2024-07-20",
+      "CustomerID": "CUST-37760",
+      "ProductID": "9400LWFW"
+    },
+    {
+      "SalesAmount": 3603530.25,
+      "Quantity": 28.027600000000003,
+      "UnitPrice": 128570.77487904778,
+      "Tax": 360353.025,
+      "Total": 3963883.2750000004,
+      "InvoiceNumber": "INV-00003",
+      "Date": "2022-08-21",
+      "CustomerID": "CUST-37963",
+      "ProductID": "9320LWFW"
+    },
+    {
+      "SalesAmount": 2244246.2,
+      "Quantity": 72.0,
+      "UnitPrice": 31170.086111111115,
+      "Tax": 224424.62000000002,
+      "Total": 2468670.8200000003,
+      "InvoiceNumber": "INV-00004",
+      "Date": "2020-10-26",
+      "CustomerID": "CUST-39714",
+      "ProductID": "9400LWFW"
+    },
+    {
+      "SalesAmount": 4346916.25,
+      "Quantity": 40.994400000000006,
+      "UnitPrice": 106036.83064028255,
+      "Tax": 434691.625,
+      "Total": 4781607.875,
+      "InvoiceNumber": "INV-00005",
+      "Date": "2021-09-16",
+      "CustomerID": "CUST-34566",
+      "ProductID": "9400LWFW"
+    },
+    {
+      "SalesAmount": 6523015.2,
+      "Quantity": 77.67960000000016,
+      "UnitPrice": 83973.33662892171,
+      "Tax": 652301.52,
+      "Total": 7175316.720000001,
+      "InvoiceNumber": "INV-00006",
+      "Date": "2018-05-24",
+      "CustomerID": "CUST-30704",
+      "ProductID": "9260LWFW"
+    },
+    {
+      "SalesAmount": 4552429.34,
+      "Quantity": 77.58480000000017,
+      "UnitPrice": 58676.819944112634,
+      "Tax": 455242.934,
+      "Total": 5007672.274,
+      "InvoiceNumber": "INV-00007",
+      "Date": "2022-04-11",
+      "CustomerID": "CUST-32527",
+      "ProductID": "9320LWFW"
+    },
+    {
+      "SalesAmount": 9550200.0,
+      "Quantity": 90.0,
+      "UnitPrice": 106113.33333333333,
+      "Tax": 955020.0,
+      "Total": 10505220.0,
+      "InvoiceNumber": "INV-00008",
+      "Date": "2017-08-02",
+      "CustomerID": "CUST-38921",
+      "ProductID": "9260LWFW"
+    },
+    {
+      "SalesAmount": 672625.57,
+      "Quantity": 19.00452,
+      "UnitPrice": 35392.92599865716,
+      "Tax": 67262.557,
+      "Total": 739888.127,
+      "InvoiceNumber": "INV-00009",
+      "Date": "2021-11-26",
+      "CustomerID": "CUST-30514",
+      "ProductID": "9260LWFW"
+    },
+    {
+      "SalesAmount": 4577920.8305,
+      "Quantity": 55.0,
+      "UnitPrice": 83234.92419090909,
+      "Tax": 457792.08305,
+      "Total": 5035712.913550001,
+      "InvoiceNumber": "INV-00010",
+      "Date": "2018-04-13",
+      "CustomerID": "CUST-38056",
+      "ProductID": "9260LWFW"
+    },
+    {
+      "SalesAmount": 4093178.1,
+      "Quantity": 26.942600000000017,
+      "UnitPrice": 151922.16415639163,
+      "Tax": 409317.81000000006,
+      "Total": 4502495.91,
+      "InvoiceNumber": "INV-00011",
+      "Date": "2022-10-20",
+      "CustomerID": "CUST-35721",
+      "ProductID": "9400LWFW"
+    },
+    {
+      "SalesAmount": 5517259.668666666,
+      "Quantity": 82.67645000000006,
+      "UnitPrice": 66733.14672638536,
+      "Tax": 551725.9668666667,
+      "Total": 6068985.635533334,
+      "InvoiceNumber": "INV-00012",
+      "Date": "2022-02-06",
+      "CustomerID": "CUST-39101",
+      "ProductID": "9350LWFW"
+    },
+    {
+      "SalesAmount": 5951273.493939395,
+      "Quantity": 66.00576000000002,
+      "UnitPrice": 90162.94174840792,
+      "Tax": 595127.3493939395,
+      "Total": 6546400.843333335,
+      "InvoiceNumber": "INV-00013",
+      "Date": "2021-11-16",
+      "CustomerID": "CUST-37083",
+      "ProductID": "9320LWFW"
+    },
+    {
+      "SalesAmount": 9473113.05,
+      "Quantity": 97.000022,
+      "UnitPrice": 97660.93712844726,
+      "Tax": 947311.3050000002,
+      "Total": 10420424.355000002,
+      "InvoiceNumber": "INV-00014",
+      "Date": "2021-12-17",
+      "CustomerID": "CUST-33153",
+      "ProductID": "9260LWFW"
+    },
+    {
+      "SalesAmount": 9321499.066666666,
+      "Quantity": 93.43800000000002,
+      "UnitPrice": 99761.32908095919,
+      "Tax": 932149.9066666667,
+      "Total": 10253648.973333335,
+      "InvoiceNumber": "INV-00015",
+      "Date": "2021-02-12",
+      "CustomerID": "CUST-35041",
+      "ProductID": "9320LWFW"
+    },
+    {
+      "SalesAmount": 4356325.0,
+      "Quantity": 25.0,
+      "UnitPrice": 174253.0,
+      "Tax": 435632.5,
+      "Total": 4791957.5,
+      "InvoiceNumber": "INV-00016",
+      "Date": "2019-10-21",
+      "CustomerID": "CUST-36669",
+      "ProductID": "9320LWFW"
+    },
+    {
+      "SalesAmount": 5085125.5,
+      "Quantity": 42.05470000000001,
+      "UnitPrice": 120916.93675142134,
+      "Tax": 508512.55000000005,
+      "Total": 5593638.050000001,
+      "InvoiceNumber": "INV-00017",
+      "Date": "2018-04-24",
+      "CustomerID": "CUST-35015",
+      "ProductID": "9400LWFW"
+    },
+    {
+      "SalesAmount": 8406167.259090908,
+      "Quantity": 92.05400000000003,
+      "UnitPrice": 91317.783682305,
+      "Tax": 840616.7259090908,
+      "Total": 9246783.985,
+      "InvoiceNumber": "INV-00018",
+      "Date": "2024-06-25",
+      "CustomerID": "CUST-39306",
+      "ProductID": "9400LWFW"
+    },
+    {
+      "SalesAmount": 323852.7616523025,
+      "Quantity": 5.0,
+      "UnitPrice": 64770.5523304605,
+      "Tax": 32385.276165230254,
+      "Total": 356238.0378175328,
+      "InvoiceNumber": "INV-00019",
+      "Date": "2023-06-13",
+      "CustomerID": "CUST-34953",
+      "ProductID": "9400LWFW"
+    },
+    {
+      "SalesAmount": 4446691.0,
+      "Quantity": 51.06280000000001,
+      "UnitPrice": 87082.78825289641,
+      "Tax": 444669.10000000003,
+      "Total": 4891360.100000001,
+      "InvoiceNumber": "INV-00020",
+      "Date": "2018-11-11",
+      "CustomerID": "CUST-38936",
+      "ProductID": "9350LWFW"
+    }
+  ]
+}

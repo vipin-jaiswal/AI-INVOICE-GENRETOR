@@ -1,25 +1,31 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "../../components/landing/Header";
 import Hero from "../../components/landing/Hero";
 import Features from "../../components/landing/Features";
 import Testimonials from "../../components/landing/Testimonials";
-import Faqs from "../../components/landing/Faqs"
+import Faqs from "../../components/landing/Faqs";
 import Footer from "../../components/landing/Footer";
 
 const LandingPage = () => {
+  const navigate = useNavigate();
+
+  const handleNavigation = () => {
+    navigate("/", { replace: true });
+  };
+
   return (
     <div className="bg-[#ffffff] text-gray-600 ">
       <Header />
-      <main >
+      <main>
         <Hero />
         <Features />
         <Testimonials />
         <Faqs />
-        <Footer/>
-
+        <Footer />
       </main>
-
     </div>
-  )};
+  );
+};
 export default LandingPage;
 

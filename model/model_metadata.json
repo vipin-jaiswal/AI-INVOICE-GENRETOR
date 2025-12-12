@@ -1,0 +1,56 @@
+{
+  "model_type": "RandomForestRegressor",
+  "training_samples": 27818,
+  "features": [
+    "Year",
+    "Month",
+    "Day",
+    "DayOfWeek",
+    "Quantity"
+  ],
+  "models": {
+    "sales_amount": {
+      "r2_score": 0.9665321903651676,
+      "rmse": 1047282.1290312264,
+      "mae": 395383.8610545263,
+      "feature_importance": {
+        "Year": 0.0,
+        "Month": 0.023624275024539225,
+        "Day": 0.03890188903157551,
+        "DayOfWeek": 0.01681244070817924,
+        "Quantity": 0.920661395235706
+      }
+    },
+    "quantity": {
+      "r2_score": 0.9999940193993072,
+      "rmse": 0.14008988680277196,
+      "mae": 0.0081216723591039,
+      "feature_importance": {
+        "Year": 0.0,
+        "Month": 1.5703056765712653e-05,
+        "Day": 1.8211482262420776e-05,
+        "DayOfWeek": 1.2526624664203444e-05,
+        "Quantity": 0.9999535588363077
+      }
+    }
+  },
+  "dataset_statistics": {
+    "total_records": 27818,
+    "unique_invoices": 17713,
+    "unique_customers": 304,
+    "unique_products": 164,
+    "date_range": "2017-01-03 to 2017-10-31",
+    "sales_amount": {
+      "min": 195.0,
+      "max": 165000000.0,
+      "mean": 2164941.1412754334,
+      "median": 984000.0
+    },
+    "quantity": {
+      "min": 0.004,
+      "max": 1072.5,
+      "mean": 24.55274383492702,
+      "median": 12.0
+    }
+  }
+}

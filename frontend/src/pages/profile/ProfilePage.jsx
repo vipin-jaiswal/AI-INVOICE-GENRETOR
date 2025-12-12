@@ -54,7 +54,7 @@ const ProfilePage = () => {
   const handleLogout = () => {
     logout();
     toast.success("Logged out successfully");
-    navigate("/auth/login");
+    navigate("/", { replace: true });
   };
 
   if(loading){

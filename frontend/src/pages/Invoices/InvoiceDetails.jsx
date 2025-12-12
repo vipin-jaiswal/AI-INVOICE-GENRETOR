@@ -140,17 +140,17 @@ const InvoiceDetails = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 my-8">
               <div>
                 <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Bill From</h3>
-                <p className="font-semibold text-slate-800">{invoice.billFrom.name}</p>
-                <p className="text-slate-600">{invoice.billFrom.address}</p>
-                <p className="text-slate-600">{invoice.billFrom.email}</p>
-                <p className="text-slate-600">{invoice.billFrom.phone}</p>
+                <p className="font-semibold text-slate-800">{invoice.billFrom?.name || "Your Company"}</p>
+                <p className="text-slate-600">{invoice.billFrom?.address || ""}</p>
+                <p className="text-slate-600">{invoice.billFrom?.email || ""}</p>
+                <p className="text-slate-600">{invoice.billFrom?.phone || ""}</p>
               </div>
               <div className="text-left sm:text-right">
                 <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Bill To</h3>
-                <p className="font-semibold text-slate-800">{invoice.billTo.name}</p>
-                <p className="text-slate-600">{invoice.billTo.address}</p>
-                <p className="text-slate-600">{invoice.billTo.email}</p>
-                <p className="text-slate-600">{invoice.billTo.phone}</p>
+                <p className="font-semibold text-slate-800">{invoice.billTo?.name || "Client"}</p>
+                <p className="text-slate-600">{invoice.billTo?.address || ""}</p>
+                <p className="text-slate-600">{invoice.billTo?.email || ""}</p>
+                <p className="text-slate-600">{invoice.billTo?.phone || ""}</p>
               </div>
             </div>
 
@@ -184,8 +184,8 @@ const InvoiceDetails = () => {
                     <tr key={index} className="border-b border-slate-200 hover:bg-slate-50">
                       <td className="px-4 py-3 sm:px-6 text-sm font-medium text-slate-800">{item.description}</td>
                       <td className="px-4 py-3 sm:px-6 text-center text-sm font-medium text-slate-600">{item.quantity}</td>
-                      <td className="px-4 py-3 sm:px-6 text-right text-sm font-medium text-slate-600">${item.unitPrice.toFixed(2)}</td>
-                      <td className="px-4 py-3 sm:px-6 text-right text-sm font-medium text-slate-800">${item.total.toFixed(2)}</td>
+                      <td className="px-4 py-3 sm:px-6 text-right text-sm font-medium text-slate-600">₹{item.unitPrice.toFixed(2)}</td>
+                      <td className="px-4 py-3 sm:px-6 text-right text-sm font-medium text-slate-800">₹{item.total.toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -196,15 +196,15 @@ const InvoiceDetails = () => {
               <div className="w-full sm:w-1/2 lg:w-1/3">
                 <div className="flex justify-between text-sm text-slate-600 mb-2">  
                   <span>Subtotal:</span>
-                  <span>${invoice.subtotal.toFixed(2)}</span>
+                  <span>₹{invoice.subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm text-slate-600 mb-2">
                   <span>Tax:</span>
-                  <span>${invoice.taxTotal.toFixed(2)}</span>
+                  <span>₹{invoice.taxTotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-lg font-semibold text-slate-900 border-t border-slate-200 pt-2">
                   <span>Total:</span>
-                  <span>${invoice.total.toFixed(2)}</span>
+                  <span>₹{invoice.total.toFixed(2)}</span>
                 </div>
               </div>
             </div>
