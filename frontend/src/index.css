@@ -1,19 +1,48 @@
-
-@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap');
 @import "tailwindcss";
-@theme {
-  --font-display: "urbanist", sans-serif;
-  --breakpoint-3xl: 1920px;
-  --color-primary: #FF9324;
 
+/* In Tailwind v4, we define theme extensions right here in CSS.
+  This sets up the animations we used in the Hero section.
+*/
+@theme {
+  /* 1. Define the Keyframes */
+  @keyframes gradient-x {
+    0%, 100% {
+      background-size: 200% 200%;
+      background-position: left center;
+    }
+    50% {
+      background-size: 200% 200%;
+      background-position: right center;
+    }
+  }
+
+  @keyframes fade-in-up {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* 2. Map Keyframes to Utility Classes */
+  --animate-gradient-x: gradient-x 15s ease infinite;
+  --animate-fade-in-up: fade-in-up 0.5s ease-out;
 }
 
-@layer base {
-  body {
-    font-family: var(--font-display);
-  }
+/* Dark mode in v4 works automatically with the `dark:` variant.
+  By default, it uses the system preference (media-query).
+  
+  To use the "Class Strategy" (which allows our toggle button to work),
+  we just need to ensure our JS toggles the class on the HTML tag.
+  
+  (No extra CSS config is needed for class-based dark mode in v4 
+   if you are toggling the class manually on the root element)
+*/
 
-  body {
-    background-color: #fcfbfc;
-  }
+/* Optional: Smooth background transition for the whole app */
+body {
+  @apply transition-colors duration-300 ease-in-out;
 }
